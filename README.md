@@ -1,86 +1,176 @@
 # Consumer Finance Complaint Intelligence
 
-[![CI](https://github.com/YOUR_USERNAME/consumer-complaint-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/consumer-complaint-intelligence/actions/workflows/ci.yml)
+[![CI](https://github.com/RishiRatnakarData/consumer-complaint-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/RishiRatnakarData/consumer-complaint-intelligence/actions/workflows/ci.yml)
 
-An end-to-end analytics project that ingests public Consumer Financial Protection Bureau complaint data, validates and models it with Python and SQL, and produces decision-ready datasets for Power BI.
+An end-to-end analytics project that uses public Consumer Financial Protection Bureau data to examine complaint volume, response patterns, relief outcomes, and product issues. The project combines a full-population monthly series with a reproducible detail sample, tested Python pipelines, DuckDB analytical models, an interpretable classifier, and Power BI-ready outputs.
 
-> Portfolio status: replace this line with `Complete - live run YYYY-MM-DD` only after the full pipeline and dashboard work.
+> **Status:** Live pipeline validated September 8, 2026. Power BI dashboard in progress.
 
 ## Business questions
 
-1. How are complaint volume, timely response, dispute, and relief rates changing?
-2. Which product-issue combinations drive the largest volumes?
-3. Which companies differ from the overall timely-response baseline?
-4. Can fields known at receipt help explain response timeliness?
+1. How did total complaint volume change throughout 2025?
+2. Which product and issue combinations dominate the detail sample?
+3. How do response and relief classifications vary among companies?
+4. Can information available near complaint intake help identify complaints likely to receive relief?
+
+## Data design
+
+The project deliberately separates two analytical datasets:
+
+- **Official monthly population totals:** All 5,442,964 CFPB complaints recorded across the 12 months of 2025.
+- **Weekly-stratified detail sample:** 5,000 complaint records distributed across weekly windows from January through December 2025.
+
+The official aggregate series supports volume trends. The detail sample supports exploratory breakdowns, quality checks, SQL analysis, and modeling. Sample counts are never presented as full-population company or product totals.
+
+Within each weekly window, the API returns the latest available records. Therefore, the detail dataset is a systematic time-stratified sample rather than a simple random sample.
+
+## Key results
+
+- CFPB recorded **5,442,964 complaints during 2025**.
+- Monthly volume increased from the February low of **335,236** to the October peak of **519,786**, a **55.1% increase**.
+- All **5 documented data-quality checks** passed for the 5,000-row detail sample.
+- Credit reporting represented **4,379 of 5,000 sampled complaints (87.6%)**.
+- “Incorrect information on your report” represented **58.2%** of sampled credit-reporting complaints.
+- The sampled relief rate was **40.6%**, while **99.6%** of sampled complaints had a timely response.
+- Relief classification varied sharply among the three largest sampled companies:
+  - TransUnion: **63.3%**
+  - Equifax: **63.2%**
+  - Experian: **0.7%**
+- That company difference is descriptive, not a quality ranking. It largely reflects non-monetary-relief classifications for TransUnion and Equifax versus explanation classifications for Experian.
+
+## Modeling results
+
+A logistic-regression model predicts whether a complaint receives monetary or non-monetary relief.
+
+Features are limited to information available near complaint intake:
+
+- Company
+- Product and sub-product
+- Issue
+- State
+- Submission channel
+- Narrative availability
+
+Company response, timely-response status, and relief fields are excluded from the predictors to prevent outcome leakage.
+
+The model uses the earliest 75% of records for training and the latest 25% for testing.
+
+| Metric | Result |
+|---|---:|
+| Training rows | 3,750 |
+| Test rows | 1,250 |
+| Baseline accuracy | 65.92% |
+| Model accuracy | 67.68% |
+| Balanced accuracy | 73.61% |
+| ROC-AUC | 73.30% |
+| Average precision | 48.19% |
+| Precision | 51.44% |
+| Recall | 92.25% |
+| F1 score | 66.05% |
+
+The model identifies most relief cases but produces many false positives. It is suitable as a prioritization demonstration, not as an automated decision system or causal model.
+
+## Recommendation
+
+Prioritize operational review of credit-reporting complaints involving incorrect report information, while separately auditing how major credit bureaus classify “explanation” and “non-monetary relief” responses. Company comparisons should not be converted into quality rankings until complaint counts are normalized by company size, market share, and customer exposure.
 
 ## Quick start
 
-```bash
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
 pip install -r requirements.txt
-pytest -q
+python -m pytest -q
+python -m ruff check .
 python -m src.pipeline --sample
 ```
 
-Run a current public-data slice:
+Run the validated 2025 live-data build:
 
-```bash
-python -m src.pipeline --limit 5000 --start-date 2024-01-01
+```powershell
+python -m src.pipeline --limit 5000 --start-date 2025-01-01 --end-date 2025-12-31
 ```
 
-The public API is paginated and rate-limited, so a 5,000-row run can take several minutes. Start with `--limit 250` to verify the connection.
-
-Outputs are written to `artifacts/`; processed detail data and the local database are written to `data/processed/`. These generated files are ignored by Git.
+Generated analytical files are written to `artifacts/`. Processed Parquet data and the DuckDB database are written to `data/processed/`. These outputs are ignored by Git and can be reproduced from the commands above.
 
 ## Architecture
 
-See [architecture and design decisions](docs/architecture.md). The flow is CFPB API -> Python validation -> Parquet/DuckDB -> SQL KPI models + interpretable model -> Power BI.
+```text
+CFPB complaint API
+├── Official trends endpoint
+│   └── Full-population monthly complaint totals
+└── Search endpoint
+    └── Weekly-stratified complaint detail sample
+        └── Validation and transformation
+            ├── Parquet detail table
+            ├── DuckDB analytical views
+            ├── CSV dashboard datasets
+            └── Relief-outcome model
+```
+
+See [architecture and design decisions](docs/architecture.md) for implementation details.
 
 ## Repository map
 
 ```text
-src/                 ingestion, cleaning, database, model, CLI
-sql/models.sql       documented KPI and ranking views
-tests/               transformation tests and edge cases
-docs/                architecture and Power BI instructions
-data/sample/         tiny non-production fixture for reproducibility
-.github/workflows/   automated lint, tests, and sample build
+src/ingest.py          cursor-based API ingestion and retries
+src/sampling.py        weekly time-stratified detail sampling
+src/trends.py          official monthly population totals
+src/transform.py       validation, normalization, and features
+src/database.py        DuckDB loading and SQL execution
+src/model.py           leakage-aware relief model
+src/pipeline.py        command-line orchestration
+sql/models.sql         KPI, company, and product-issue views
+tests/                 ingestion, sampling, trends, model, and transform tests
+docs/                  architecture and Power BI instructions
+data/sample/           small offline fixture used by CI
+.github/workflows/     automated lint, tests, and sample build
 ```
 
-## Results
+## Data quality
 
-Replace this section after the live run. Include exact evidence, for example:
+The pipeline verifies:
 
-- Analyzed **[REAL ROW COUNT]** complaints received from **[MIN DATE]** to **[MAX DATE]**.
-- All **[N]** documented data-quality checks passed.
-- The largest product-issue combination was **[VALUE]**, representing **[VALUE]%** of the selected slice.
-- The chronological holdout model achieved ROC-AUC **[VALUE]**; interpret this as predictive association, not causal effect.
-- Decision recommendation: **[one specific, evidence-backed action]**.
+1. The cleaned table contains records.
+2. Complaint IDs are unique.
+3. Receipt dates are complete.
+4. Product values are complete.
+5. Timeliness values are binary when labeled.
 
-![Dashboard placeholder - replace with your verified Power BI screenshot](docs/images/dashboard_placeholder.svg)
-
-## Data source and ethics
-
-Source: [CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/). Complaint narratives and company responses have limitations; the CFPB does not verify every consumer account. Complaint counts are affected by company size, market share, product mix, reporting behavior, and taxonomy changes. This project does not rank company quality or make causal claims.
-
-The current API may not populate the historical consumer-dispute field. Unknown values remain null rather than being treated as "No"; report that metric only when the selected data contains labeled records.
+The current API does not provide usable consumer-dispute labels for this dataset, so the project excludes dispute-rate reporting rather than treating unknown values as “No.”
 
 ## Testing and reproducibility
 
-- `pytest` covers required fields, duplicate handling, and engineered features.
-- `ruff` checks Python quality.
-- GitHub Actions runs linting, tests, and an offline sample pipeline on pushes and pull requests.
-- The sample fixture makes CI independent of API availability.
+- **7 automated tests** cover transformations, duplicate handling, API cursor pagination, weekly sampling, monthly trends, and model behavior.
+- Ruff checks Python code quality.
+- GitHub Actions runs linting, tests, and the offline sample pipeline on pushes and pull requests.
+- CI does not depend on live CFPB availability.
+- Generated data, local databases, virtual environments, secrets, and Power BI files are excluded from Git.
+
+## Limitations
+
+- The 5,000 detail records are a systematic weekly-stratified sample, not the full complaint population or a random probability sample.
+- Raw complaint counts do not account for company size, market share, customer exposure, or product mix.
+- Complaint submissions reflect reporting behavior and are not independently verified accounts of company wrongdoing.
+- Taxonomy and response-classification practices can change over time.
+- Predictive associations do not establish causal effects.
+- Model performance should be monitored for calibration and temporal drift before operational use.
 
 ## Next steps
 
-- Add market-share denominators before comparing complaint incidence.
-- Add a PostgreSQL deployment and indexes for multi-user serving.
-- Add drift monitoring for product and issue distributions.
-- Publish the Power BI report or a 3-5 minute walkthrough video.
+- Build and validate the Power BI report.
+- Add company exposure or market-share denominators.
+- Add probability calibration and threshold analysis.
+- Add taxonomy-drift monitoring.
+- Consider PostgreSQL only after implementing and testing a genuine deployment path.
+
+## Data source
+
+[CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/)
 
 ## Author
 
-Rishi Ratnakar - [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) | [GitHub](https://github.com/RishiRatnakarData)
+**Rishi Ratnakar**
+
+[LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) · [GitHub](https://github.com/RishiRatnakarData)
