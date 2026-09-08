@@ -14,6 +14,7 @@ from src.ingest import download_cfpb, load_sample  # noqa: E402
 from src.model import fit_timeliness_model  # noqa: E402
 from src.transform import clean_complaints, quality_report  # noqa: E402
 from src.trends import download_monthly_counts  # noqa: E402
+from src.sampling import download_weekly_stratified_sample  # noqa: E402
 
 
 def run(
@@ -22,11 +23,22 @@ def run(
     start_date: str,
     end_date: str | None = None,
 ) -> None:
-    raw = (
-        load_sample(ROOT)
-        if sample
-        else download_cfpb(limit, start_date, end_date)
-    )
+    if sample:
+        raw = load_sample(ROOT)
+        sample_method = "committed_fixture"
+    elif end_date is not None:
+        raw = download_weekly_stratified_sample(
+            limit,
+            start_date,
+            end_date,
+        )
+        sample_method = "weekly_stratified_detail_sample"
+    else:
+        raw = download_cfpb(
+            limit,
+            start_date,
+        )
+        sample_method = "latest_records_detail_sample"
     clean = clean_complaints(raw)
     report = quality_report(clean)
 
@@ -81,6 +93,7 @@ def run(
         official_counts_path.unlink()
 
     summary = {
+        "detail_sample_method": sample_method,
         "mode": "sample" if sample else "live",
         "detail_sample_rows": len(clean),
         "detail_sample_min_date": str(
