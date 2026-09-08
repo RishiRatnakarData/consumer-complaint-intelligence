@@ -8,7 +8,10 @@ import time
 import pandas as pd
 import requests
 
-CFPB_CSV_URL = "https://www.consumerfinance.gov/data-research/consumer-complaints/search/api/v1/"
+CFPB_CSV_URL = (
+    "https://www.consumerfinance.gov/data-research/"
+    "consumer-complaints/search/api/v1/"
+)
 
 
 def load_sample(root: Path) -> pd.DataFrame:
@@ -16,33 +19,57 @@ def load_sample(root: Path) -> pd.DataFrame:
 
 
 def download_cfpb(limit: int, start_date: str, timeout: int = 60) -> pd.DataFrame:
-    """Page through the official JSON API without downloading the full export.
+    """Download unique complaint pages from the official CFPB API.
 
-    The deployed API currently accepts small pages, so a polite pause and 429
-    retry are used. Large portfolio runs can take several minutes.
+    The API uses search-after pagination. Each response provides the marker
+    needed to retrieve the next page.
     """
     page_size = 25
+    page_number = 1
+    search_after: str | None = None
     rows: list[dict] = []
     session = requests.Session()
+
     while len(rows) < limit:
-        params = {
+        requested_size = min(page_size, limit - len(rows))
+        params: dict[str, str | int] = {
             "date_received_min": start_date,
-            "size": min(page_size, limit - len(rows)),
+            "size": requested_size,
             "sort": "created_date_desc",
             "no_aggs": "true",
         }
-        if rows:
-            params["frm"] = len(rows)
+
+        if search_after is not None:
+            params["page"] = page_number
+            params["frm"] = (page_number - 1) * page_size
+            params["search_after"] = search_after
+
         for attempt in range(5):
             response = session.get(CFPB_CSV_URL, params=params, timeout=timeout)
             if response.status_code != 429:
                 break
-            time.sleep(2 ** attempt)
+            time.sleep(2**attempt)
+
         response.raise_for_status()
-        hits = response.json().get("hits", {}).get("hits", [])
-        page = [hit["_source"] for hit in hits]
-        rows.extend(page)
-        if len(page) < params["size"]:
+        payload = response.json()
+        hits = payload.get("hits", {}).get("hits", [])
+        page_rows = [hit["_source"] for hit in hits]
+        rows.extend(page_rows)
+
+        if len(page_rows) < requested_size or len(rows) >= limit:
             break
+
+        next_page = page_number + 1
+        break_points = payload.get("_meta", {}).get("break_points", {})
+        marker = break_points.get(str(next_page))
+
+        if not marker or len(marker) != 2:
+            raise RuntimeError(
+                f"CFPB API did not provide a pagination marker for page {next_page}"
+            )
+
+        search_after = f"{marker[0]}_{marker[1]}"
+        page_number = next_page
         time.sleep(0.4)
+
     return pd.DataFrame(rows[:limit])
