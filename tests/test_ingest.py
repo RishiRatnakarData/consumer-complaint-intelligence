@@ -1,4 +1,4 @@
-"""Tests for CFPB API pagination."""
+"""Tests for CFPB ingestion."""
 
 from src import ingest
 
@@ -10,7 +10,7 @@ class FakeResponse:
         self.payload = payload
 
     def raise_for_status(self) -> None:
-        pass
+        return None
 
     def json(self) -> dict:
         return self.payload
@@ -26,38 +26,37 @@ class FakeSession:
         return FakeResponse(self.payloads.pop(0))
 
 
-def make_page(page_index: int) -> dict:
-    start = page_index * 25
+def make_payload(start: int, count: int) -> dict:
     hits = [
-        {"_source": {"complaint_id": str(complaint_id)}}
-        for complaint_id in range(start, start + 25)
+        {
+            "_source": {"complaint_id": str(index)},
+            "sort": [1_700_000_000_000 - index, str(index)],
+        }
+        for index in range(start, start + count)
     ]
-    next_page = page_index + 2
-
-    return {
-        "hits": {"hits": hits},
-        "_meta": {
-            "break_points": {
-                str(next_page): [1700000000000 - page_index, str(start + 24)]
-            }
-        },
-    }
+    return {"hits": {"hits": hits}}
 
 
-def test_download_cfpb_uses_cursor_pagination(monkeypatch) -> None:
-    fake_session = FakeSession([make_page(index) for index in range(9)])
+def test_download_uses_sequential_cursor_pagination(monkeypatch) -> None:
+    fake_session = FakeSession(
+        [
+            make_payload(0, 100),
+            make_payload(100, 100),
+            make_payload(200, 25),
+        ]
+    )
 
     monkeypatch.setattr(ingest.requests, "Session", lambda: fake_session)
     monkeypatch.setattr(ingest.time, "sleep", lambda _: None)
 
-    result = ingest.download_cfpb(limit=225, start_date="2025-01-01")
+    result = ingest.download_cfpb(
+        limit=225,
+        start_date="2025-01-01",
+    )
 
     assert len(result) == 225
     assert result["complaint_id"].nunique() == 225
-    assert len(fake_session.calls) == 9
-
+    assert len(fake_session.calls) == 3
     assert "search_after" not in fake_session.calls[0]
-    assert fake_session.calls[1]["page"] == 2
-    assert fake_session.calls[1]["frm"] == 25
-    assert fake_session.calls[-1]["page"] == 9
-    assert fake_session.calls[-1]["frm"] == 200
+    assert fake_session.calls[1]["search_after"].endswith("_99")
+    assert fake_session.calls[2]["search_after"].endswith("_199")
