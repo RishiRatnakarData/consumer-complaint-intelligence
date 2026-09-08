@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 from src.database import build_database  # noqa: E402
 from src.ingest import download_cfpb, load_sample  # noqa: E402
-from src.model import fit_timeliness_model  # noqa: E402
+from src.model import fit_relief_model  # noqa: E402
 from src.transform import clean_complaints, quality_report  # noqa: E402
 from src.trends import download_monthly_counts  # noqa: E402
 from src.sampling import download_weekly_stratified_sample  # noqa: E402
@@ -70,7 +70,7 @@ def run(
             index=False,
         )
 
-    metrics = fit_timeliness_model(
+    metrics = fit_relief_model(
         clean,
         artifacts / "model_metrics.json",
     )
