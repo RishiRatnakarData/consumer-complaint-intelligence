@@ -52,6 +52,11 @@ def test_download_uses_sequential_cursor_pagination(monkeypatch) -> None:
     result = ingest.download_cfpb(
         limit=225,
         start_date="2025-01-01",
+        end_date="2026-01-01",
+    )
+    assert all(
+        call["date_received_max"] == "2026-01-01"
+        for call in fake_session.calls
     )
 
     assert len(result) == 225

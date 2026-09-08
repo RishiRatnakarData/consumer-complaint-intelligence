@@ -18,7 +18,12 @@ def load_sample(root: Path) -> pd.DataFrame:
     return pd.read_csv(root / "data" / "sample" / "complaints_sample.csv")
 
 
-def download_cfpb(limit: int, start_date: str, timeout: int = 30) -> pd.DataFrame:
+def download_cfpb(
+    limit: int,
+    start_date: str,
+    end_date: str | None = None,
+    timeout: int = 30,
+) -> pd.DataFrame:
     """Download unique complaint pages from the official CFPB API.
 
     Sequential pages use the sort cursor from the final hit of each response.
@@ -38,7 +43,8 @@ def download_cfpb(limit: int, start_date: str, timeout: int = 30) -> pd.DataFram
             "sort": "created_date_desc",
             "no_aggs": "true",
         }
-
+        if end_date is not None:
+            params["date_received_max"] = end_date
         if search_after is not None:
             params["search_after"] = search_after
 
