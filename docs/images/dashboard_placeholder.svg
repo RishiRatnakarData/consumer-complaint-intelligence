@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <rect width="1200" height="675" fill="#f4f7fb"/>
+  <rect x="55" y="55" width="1090" height="565" rx="18" fill="white" stroke="#b8c6d9" stroke-width="3"/>
+  <text x="600" y="290" text-anchor="middle" font-family="Arial" font-size="38" fill="#24364b">Power BI dashboard screenshot</text>
+  <text x="600" y="350" text-anchor="middle" font-family="Arial" font-size="24" fill="#5b6b7d">Replace this file only after validating every metric.</text>
+  <text x="600" y="405" text-anchor="middle" font-family="Arial" font-size="20" fill="#7b8794">Recommended size: 1600 x 900</text>
+</svg>
