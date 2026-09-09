@@ -76,15 +76,25 @@ Prioritize operational review of credit-reporting complaints involving incorrect
 
 ## Dashboard
 
+### Executive Overview
+
 ![Power BI Executive Overview](docs/images/dashboard_overview.png)
 
-The Power BI report contains three pages:
+### Company Benchmark
+
+![Power BI Company Benchmark](docs/images/company_benchmark.png)
+
+### Product & Issue Detail
+
+![Power BI Product and Issue Detail](docs/images/product_issue_detail.png)
+
+The report contains three pages:
 
 1. **Executive Overview** — official monthly complaint volume and sampled response outcomes.
 2. **Company Benchmark** — descriptive company-level complaint, relief, and narrative comparisons.
 3. **Product & Issue Detail** — an interactive product filter and ranked issue analysis.
 
-The dashboard build specification is documented in [`docs/power_bi.md`](docs/power_bi.md), and the verified Executive Overview is shown above. Generated datasets can be recreated by running the pipeline.
+The dashboard build specification is documented in [`docs/power_bi.md`](docs/power_bi.md). Generated datasets can be recreated by running the pipeline.
 
 ## Quick start
 
