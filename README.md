@@ -4,7 +4,7 @@
 
 An end-to-end analytics project that uses public Consumer Financial Protection Bureau data to examine complaint volume, response patterns, relief outcomes, and product issues. The project combines a full-population monthly series with a reproducible detail sample, tested Python pipelines, DuckDB analytical models, an interpretable classifier, and Power BI-ready outputs.
 
-> **Status:** Live pipeline validated September 8, 2026. Power BI dashboard in progress.
+> **Status:** Complete — live pipeline and Power BI dashboard validated.
 
 ## Business questions
 
@@ -73,6 +73,18 @@ The model identifies most relief cases but produces many false positives. It is 
 ## Recommendation
 
 Prioritize operational review of credit-reporting complaints involving incorrect report information, while separately auditing how major credit bureaus classify “explanation” and “non-monetary relief” responses. Company comparisons should not be converted into quality rankings until complaint counts are normalized by company size, market share, and customer exposure.
+
+## Dashboard
+
+![Power BI Executive Overview](docs/images/dashboard_overview.png)
+
+The Power BI report contains three pages:
+
+1. **Executive Overview** — official monthly complaint volume and sampled response outcomes.
+2. **Company Benchmark** — descriptive company-level complaint, relief, and narrative comparisons.
+3. **Product & Issue Detail** — an interactive product filter and ranked issue analysis.
+
+The dashboard build specification is documented in [`docs/power_bi.md`](docs/power_bi.md), and the verified Executive Overview is shown above. Generated datasets can be recreated by running the pipeline.
 
 ## Quick start
 
@@ -159,7 +171,6 @@ The current API does not provide usable consumer-dispute labels for this dataset
 
 ## Next steps
 
-- Build and validate the Power BI report.
 - Add company exposure or market-share denominators.
 - Add probability calibration and threshold analysis.
 - Add taxonomy-drift monitoring.
