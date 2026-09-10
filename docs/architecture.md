@@ -93,7 +93,7 @@ Cleaned complaint details are written to Parquet for compact typed storage and l
 
 CSV extracts from these views are written to `artifacts/` for Power BI.
 
-DuckDB provides a reproducible zero-service analytical environment. PostgreSQL is not claimed because this project does not currently implement a PostgreSQL deployment.
+DuckDB provides a reproducible, zero-service analytical environment for local development and reporting datasets.
 
 ## Predictive model
 
@@ -113,7 +113,7 @@ Company response, timely-response status, and relief-derived fields are excluded
 
 The earliest 75% of records are used for training and the latest 25% for testing. This chronological holdout provides a more realistic evaluation than a random split when data patterns may change over time.
 
-The model is an interpretable prioritization demonstration. Its associations do not establish causality and it should not be used as an automated decision system.
+The model is an interpretable prioritization tool. Its associations do not establish causality, and it should not be used as an automated decision system.
 
 ## Power BI
 
@@ -129,4 +129,4 @@ The dashboard explicitly distinguishes full-population volume metrics from detai
 
 The repository includes a small committed sample dataset so automated tests and GitHub Actions do not depend on live CFPB availability.
 
-Generated artifacts, processed data, local DuckDB databases, virtual environments, secrets, and Power BI files are excluded from Git. The verified dashboard screenshot is committed for portfolio review.
+Generated artifacts, processed data, local DuckDB databases, virtual environments, secrets, and Power BI files are excluded from Git. Report screenshots are committed to document the completed analytical output.

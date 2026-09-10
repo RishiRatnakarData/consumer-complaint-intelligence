@@ -28,7 +28,7 @@ def fit_relief_model(
 ) -> dict[str, object]:
     """Predict relief using fields available near complaint intake.
 
-    This is a portfolio modeling demonstration, not a causal model or an
+    This is a prioritization model, not a causal model or an
     automated decision system. A chronological holdout limits future leakage.
     """
     categorical_features = [
