@@ -35,7 +35,7 @@ Three Power BI pages present the reporting layer through an executive summary, c
 | [![Executive overview](docs/images/dashboard_overview.png)](docs/images/dashboard_overview.png) | [![Company benchmark](docs/images/company_benchmark.png)](docs/images/company_benchmark.png) | [![Product and issue detail](docs/images/product_issue_detail.png)](docs/images/product_issue_detail.png) |
 | Monthly trend and response KPIs | Descriptive company response comparisons | Product breakdowns and issue rankings |
 
-*These screenshots document an earlier dashboard build. Its historical population-level aggregates were not refreshed in the October 2026 model evaluation. Company-level metrics are descriptive, not quality rankings.*
+*These screenshots document an earlier dashboard build. The historical population-level trend aggregates were **not refreshed** for the October 2026 modeling run; their original retrieval timestamp is not preserved. Company-level metrics are descriptive, not quality rankings. [Data provenance](docs/REPORTING_PROVENANCE.md).*
 
 [Power BI design and measures](docs/power_bi.md)
 
