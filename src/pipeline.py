@@ -7,13 +7,16 @@ import json
 import shutil
 from pathlib import Path
 
+import pandas as pd
+import requests
+
 ROOT = Path(__file__).resolve().parents[1]
 
 from src.database import build_database  # noqa: E402
 from src.ingest import download_cfpb, load_sample  # noqa: E402
 from src.model import fit_relief_model  # noqa: E402
 from src.transform import clean_complaints, quality_report  # noqa: E402
-from src.trends import download_monthly_counts  # noqa: E402
+from src.trends import CFPBTrendsUnavailable, download_monthly_counts  # noqa: E402
 from src.sampling import download_weekly_stratified_sample  # noqa: E402
 
 
@@ -22,8 +25,32 @@ def run(
     limit: int,
     start_date: str,
     end_date: str | None = None,
+    *,
+    reuse_processed: bool = False,
+    skip_official_counts: bool = False,
+    require_official_counts: bool = False,
 ) -> None:
-    if sample:
+    if skip_official_counts and require_official_counts:
+        raise ValueError("Cannot both skip and require official counts")
+    if sample and reuse_processed:
+        raise ValueError("Cannot use --sample and --reuse-processed together")
+    if reuse_processed:
+        source = ROOT / "data" / "processed" / "complaints.parquet"
+        if not source.exists():
+            raise FileNotFoundError(f"No processed complaints at {source}; run a live download first")
+        clean = pd.read_parquet(source)
+        if "date_received" not in clean.columns:
+            raise ValueError("Processed dataset lacks date_received")
+        actual = pd.to_datetime(clean["date_received"], errors="coerce", utc=True)
+        if actual.isna().any() or clean.empty:
+            raise ValueError("Processed dataset contains invalid dates or no rows")
+        # Compare UTC calendar dates directly to avoid timedelta unit ambiguity.
+        if actual.min().date() < pd.Timestamp(start_date).date() or (
+            end_date is not None and actual.max().date() > pd.Timestamp(end_date).date()
+        ):
+            raise ValueError("Existing dataset dates are outside the specified window; check --start-date and --end-date")
+        sample_method = "reused_existing_processed_detail_dataset; original selection not reverified"
+    elif sample:
         raw = load_sample(ROOT)
         sample_method = "committed_fixture"
     elif end_date is not None:
@@ -39,7 +66,8 @@ def run(
             start_date,
         )
         sample_method = "latest_records_detail_sample"
-    clean = clean_complaints(raw)
+    if not reuse_processed:
+        clean = clean_complaints(raw)
     report = quality_report(clean)
 
     if not report["passed"].all():
@@ -50,10 +78,11 @@ def run(
     processed.mkdir(parents=True, exist_ok=True)
     artifacts.mkdir(parents=True, exist_ok=True)
 
-    clean.to_parquet(
-        processed / "complaints.parquet",
-        index=False,
-    )
+    if not reuse_processed:
+        clean.to_parquet(
+            processed / "complaints.parquet",
+            index=False,
+        )
     report.to_csv(
         artifacts / "quality_report.csv",
         index=False,
@@ -80,16 +109,25 @@ def run(
         artifacts / "official_monthly_counts.csv"
     )
 
+    official_counts_status = "not_requested"
+    official_counts_error = None
     if not sample and end_date is not None:
-        official_counts = download_monthly_counts(
-            start_date,
-            end_date,
-        )
-        official_counts.to_csv(
-            official_counts_path,
-            index=False,
-        )
-    elif official_counts_path.exists():
+        if skip_official_counts:
+            official_counts_status = "skipped"
+            print("NOTICE: Skipping optional official monthly counts; any existing CSV is NOT refreshed.")
+        else:
+            try:
+                official_counts = download_monthly_counts(start_date, end_date)
+                official_counts.to_csv(official_counts_path, index=False)
+                official_counts_status = "fresh"
+            except (CFPBTrendsUnavailable, requests.RequestException, ValueError, RuntimeError) as exc:
+                official_counts_status = "unavailable"
+                official_counts_error = f"{type(exc).__name__}: {exc}"
+                if require_official_counts:
+                    raise
+                print(f"WARNING: Official monthly counts unavailable: {official_counts_error}")
+                print("WARNING: Retaining any prior official_monthly_counts.csv unchanged; it is NOT this run's evidence.")
+    elif sample and official_counts_path.exists():
         official_counts_path.unlink()
 
     summary = {
@@ -110,6 +148,12 @@ def run(
         ),
         "quality_checks_passed": int(
             report["passed"].sum()
+        ),
+        "processed_data_reused": reuse_processed,
+        "official_counts_status": official_counts_status,
+        "official_counts_error": official_counts_error,
+        "prior_official_counts_file_present_but_not_refreshed": (
+            official_counts_status in {"unavailable", "skipped"} and official_counts_path.exists()
         ),
         "official_months": (
             len(official_counts)
@@ -157,6 +201,21 @@ def main() -> None:
         help="Optional maximum complaint-received date",
     )
     parser.add_argument(
+        "--reuse-processed",
+        action="store_true",
+        help="Reuse the existing processed Parquet; do not redownload detail complaints",
+    )
+    parser.add_argument(
+        "--skip-official-counts",
+        action="store_true",
+        help="Skip the optional legacy monthly-trends endpoint; do not refresh its CSV",
+    )
+    parser.add_argument(
+        "--require-official-counts",
+        action="store_true",
+        help="Fail the full run if the optional official monthly counts are unavailable",
+    )
+    parser.add_argument(
         "--clean-output",
         action="store_true",
     )
@@ -181,6 +240,9 @@ def main() -> None:
         args.limit,
         args.start_date,
         args.end_date,
+        reuse_processed=args.reuse_processed,
+        skip_official_counts=args.skip_official_counts,
+        require_official_counts=args.require_official_counts,
     )
 
 

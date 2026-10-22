@@ -7,6 +7,10 @@ import time
 import pandas as pd
 import requests
 
+
+class CFPBTrendsUnavailable(RuntimeError):
+    """The optional full-population monthly-trends feed is not usable."""
+
 CFPB_TRENDS_URL = (
     "https://www.consumerfinance.gov/data-research/"
     "consumer-complaints/search/api/v1/trends"
@@ -48,7 +52,21 @@ def download_monthly_counts(
                 raise
             time.sleep(2**attempt)
 
-    payload = response.json()
+    # The complaint-search API and its older visualization/trends endpoint are
+    # separate. A response may be HTTP 200 but contain an HTML page, especially
+    # when the endpoint has changed. Surface that fact, not a JSON decoder dump.
+    content_type = response.headers.get("Content-Type", "") if hasattr(response, "headers") else ""
+    try:
+        payload = response.json()
+    except ValueError as exc:
+        raise CFPBTrendsUnavailable(
+            "CFPB monthly-trends endpoint did not return JSON "
+            f"(HTTP {response.status_code}, Content-Type={content_type or 'unknown'}). "
+            "The optional trends/visualizations API may have changed. "
+            "The detail dataset and its model may still be valid."
+        ) from exc
+    if not isinstance(payload, dict):
+        raise CFPBTrendsUnavailable("CFPB monthly-trends returned an unexpected JSON payload type")
     buckets = (
         payload.get("aggregations", {})
         .get("dateRangeArea", {})
@@ -67,7 +85,7 @@ def download_monthly_counts(
     )
 
     if monthly.empty:
-        raise RuntimeError("CFPB trends API returned no monthly counts")
+        raise CFPBTrendsUnavailable("CFPB trends API returned no monthly counts")
 
     monthly["received_month"] = pd.to_datetime(
         monthly["received_month"]

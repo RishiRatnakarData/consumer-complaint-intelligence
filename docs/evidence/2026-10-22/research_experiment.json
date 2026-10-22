@@ -1,0 +1,31 @@
+{
+  "status": "completed",
+  "experiment": "research_three_way_60_15_25_approx_by_date",
+  "model": "logistic_regression_balanced_weight_onehot_min_frequency_5",
+  "features": [
+    "company",
+    "product",
+    "sub_product",
+    "issue",
+    "state",
+    "submitted_via"
+  ],
+  "excluded_features": [
+    "has_narrative"
+  ],
+  "narrative_feature_audit": {
+    "train_positive_rows": 0,
+    "sample_positive_rows": 0,
+    "train_unique_values": 1,
+    "interpretation": "Excluded: constant in training; missing source narrative content does not prove complainants did not submit narratives"
+  },
+  "rows": 5000,
+  "counts": {
+    "train": 3026,
+    "validation": 752,
+    "test": 1222
+  },
+  "split_policy": "chronological by date_received; same-day records never cross windows",
+  "label": "has_relief, derived from company_response (post-intake outcome)",
+  "caveat": "This is not the repository's original 75/25 experiment; do not compare metric changes as model improvements."
+}

@@ -1,0 +1,364 @@
+{
+  "scope": "Supplied row-level predictions; NOT full-population complaint aggregates",
+  "data_kind": "cfpb_sample",
+  "input_sha256": "8b03004a4fc7f857f80f9ec83a157a785c44cae8c2183e4f656e091019b65c18",
+  "date_ranges": {
+    "test": {
+      "start": "2025-10-14",
+      "end": "2025-12-31"
+    },
+    "train": {
+      "start": "2025-01-07",
+      "end": "2025-08-12"
+    },
+    "validation": {
+      "start": "2025-08-19",
+      "end": "2025-10-07"
+    }
+  },
+  "split_counts": {
+    "train": 3026,
+    "test": 1222,
+    "validation": 752
+  },
+  "train_prevalence_baseline": 0.4510905485789822,
+  "threshold_source": "validation",
+  "validation_recall_at_selected_threshold": 0.8582995951417004,
+  "test_model": {
+    "n": 1222,
+    "prevalence": 0.3436988543371522,
+    "threshold": 0.65,
+    "roc_auc": 0.729168151050944,
+    "average_precision": 0.4758768811914584,
+    "brier_score": 0.21674755825542014,
+    "log_loss": 0.6052878435296822,
+    "ece_10bins": 0.1483970622950022,
+    "accuracy": 0.6653027823240589,
+    "precision": 0.5081481481481481,
+    "recall": 0.8166666666666667,
+    "f1": 0.6264840182648402,
+    "review_rate": 0.5523731587561375,
+    "confusion": {
+      "tn": 470,
+      "fp": 332,
+      "fn": 77,
+      "tp": 343
+    },
+    "reliability_bins": [
+      {
+        "lower": 0.0,
+        "upper": 0.1,
+        "count": 331,
+        "predicted": 0.022275563829324725,
+        "observed": 0.01812688821752266
+      },
+      {
+        "lower": 0.1,
+        "upper": 0.2,
+        "count": 78,
+        "predicted": 0.14339799633078473,
+        "observed": 0.15384615384615385
+      },
+      {
+        "lower": 0.2,
+        "upper": 0.3,
+        "count": 41,
+        "predicted": 0.24707960180061367,
+        "observed": 0.1951219512195122
+      },
+      {
+        "lower": 0.3,
+        "upper": 0.4,
+        "count": 15,
+        "predicted": 0.35508855561777175,
+        "observed": 0.4
+      },
+      {
+        "lower": 0.4,
+        "upper": 0.5,
+        "count": 22,
+        "predicted": 0.4498993776334496,
+        "observed": 0.45454545454545453
+      },
+      {
+        "lower": 0.5,
+        "upper": 0.6,
+        "count": 21,
+        "predicted": 0.5588782839334046,
+        "observed": 0.5238095238095238
+      },
+      {
+        "lower": 0.6,
+        "upper": 0.7,
+        "count": 124,
+        "predicted": 0.661935947669238,
+        "observed": 0.5483870967741935
+      },
+      {
+        "lower": 0.7,
+        "upper": 0.8,
+        "count": 381,
+        "predicted": 0.7510582411416913,
+        "observed": 0.5328083989501312
+      },
+      {
+        "lower": 0.8,
+        "upper": 0.9,
+        "count": 207,
+        "predicted": 0.8329515994121728,
+        "observed": 0.45893719806763283
+      },
+      {
+        "lower": 0.9,
+        "upper": 1.0,
+        "count": 2,
+        "predicted": 0.9281103761367795,
+        "observed": 0.5
+      }
+    ]
+  },
+  "test_constant_baseline": {
+    "n": 1222,
+    "prevalence": 0.3436988543371522,
+    "threshold": 0.5,
+    "roc_auc": 0.5,
+    "average_precision": 0.3436988543371522,
+    "brier_score": 0.2371029278566119,
+    "log_loss": 0.6672779785464454,
+    "ece_10bins": 0.10739169424182989,
+    "accuracy": 0.6563011456628478,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1": 0.0,
+    "review_rate": 0.0,
+    "confusion": {
+      "tn": 802,
+      "fp": 0,
+      "fn": 420,
+      "tp": 0
+    },
+    "reliability_bins": [
+      {
+        "lower": 0.0,
+        "upper": 0.1,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.1,
+        "upper": 0.2,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.2,
+        "upper": 0.3,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.3,
+        "upper": 0.4,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.4,
+        "upper": 0.5,
+        "count": 1222,
+        "predicted": 0.45109054857898206,
+        "observed": 0.3436988543371522
+      },
+      {
+        "lower": 0.5,
+        "upper": 0.6,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.6,
+        "upper": 0.7,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.7,
+        "upper": 0.8,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.8,
+        "upper": 0.9,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.9,
+        "upper": 1.0,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      }
+    ]
+  },
+  "subgroups": {
+    "product": [
+      {
+        "group": "Credit reporting or other personal consumer reports",
+        "n": 1081,
+        "observed_relief": 0.3654024051803885,
+        "brier_score": 0.22391618960708376,
+        "recall": 0.8658227848101265,
+        "review_rate": 0.6216466234967623,
+        "roc_auc": 0.7058032254493117
+      },
+      {
+        "group": "Debt collection",
+        "n": 69,
+        "observed_relief": 0.18840579710144928,
+        "brier_score": 0.18185969843035796,
+        "recall": 0.07692307692307693,
+        "review_rate": 0.043478260869565216,
+        "roc_auc": 0.5240384615384616
+      }
+    ],
+    "company": [
+      {
+        "group": "EQUIFAX, INC.",
+        "n": 363,
+        "observed_relief": 0.5950413223140496,
+        "brier_score": 0.2596391734908256,
+        "recall": 0.8564814814814815,
+        "review_rate": 0.8705234159779615,
+        "roc_auc": 0.5175107079868985
+      },
+      {
+        "group": "Experian Information Solutions Inc.",
+        "n": 280,
+        "observed_relief": 0.0,
+        "brier_score": 0.0002838570758089243,
+        "recall": 0.0,
+        "review_rate": 0.0,
+        "roc_auc": null
+      },
+      {
+        "group": "TRANSUNION INTERMEDIATE HOLDINGS, INC.",
+        "n": 366,
+        "observed_relief": 0.4371584699453552,
+        "brier_score": 0.3763198202826097,
+        "recall": 0.9875,
+        "review_rate": 0.9808743169398907,
+        "roc_auc": 0.47827669902912623
+      }
+    ]
+  },
+  "notes": [
+    "Scores are evaluated on the supplied test period; they are NOT newly trained models.",
+    "All group metrics are descriptive and lack adjustments for complaint mix or exposure.",
+    "This evaluation uses the sampled detail data, not the full population aggregate.",
+    "Baseline classification statistics use cutoff 0.50, not the validation-selected model cutoff; compare probability scores primarily",
+    "Platt calibration fitted on validation and compared on test using a 0.50 probability classification cutoff; validation-selected raw-score threshold applies ONLY to test_model"
+  ],
+  "test_platt_calibrated": {
+    "n": 1222,
+    "prevalence": 0.3436988543371522,
+    "threshold": 0.5,
+    "roc_auc": 0.729168151050944,
+    "average_precision": 0.4758768811914584,
+    "brier_score": 0.18332141255990111,
+    "log_loss": 0.5186093953499946,
+    "ece_10bins": 0.08227640540196597,
+    "accuracy": 0.6276595744680851,
+    "precision": 0.44224422442244227,
+    "recall": 0.319047619047619,
+    "f1": 0.3706777316735823,
+    "review_rate": 0.2479541734860884,
+    "confusion": {
+      "tn": 633,
+      "fp": 169,
+      "fn": 286,
+      "tp": 134
+    },
+    "reliability_bins": [
+      {
+        "lower": 0.0,
+        "upper": 0.1,
+        "count": 355,
+        "predicted": 0.03380831248784998,
+        "observed": 0.022535211267605635
+      },
+      {
+        "lower": 0.1,
+        "upper": 0.2,
+        "count": 97,
+        "predicted": 0.14116810792223153,
+        "observed": 0.18556701030927836
+      },
+      {
+        "lower": 0.2,
+        "upper": 0.3,
+        "count": 32,
+        "predicted": 0.25134112286408883,
+        "observed": 0.46875
+      },
+      {
+        "lower": 0.3,
+        "upper": 0.4,
+        "count": 72,
+        "predicted": 0.3686299495162781,
+        "observed": 0.5694444444444444
+      },
+      {
+        "lower": 0.4,
+        "upper": 0.5,
+        "count": 363,
+        "predicted": 0.45832394153394795,
+        "observed": 0.5619834710743802
+      },
+      {
+        "lower": 0.5,
+        "upper": 0.6,
+        "count": 274,
+        "predicted": 0.543395380737201,
+        "observed": 0.4562043795620438
+      },
+      {
+        "lower": 0.6,
+        "upper": 0.7,
+        "count": 28,
+        "predicted": 0.6267685891336514,
+        "observed": 0.32142857142857145
+      },
+      {
+        "lower": 0.7,
+        "upper": 0.8,
+        "count": 1,
+        "predicted": 0.749131192382806,
+        "observed": 0.0
+      },
+      {
+        "lower": 0.8,
+        "upper": 0.9,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      },
+      {
+        "lower": 0.9,
+        "upper": 1.0,
+        "count": 0,
+        "predicted": null,
+        "observed": null
+      }
+    ]
+  }
+}

@@ -12,3 +12,5 @@ artifacts/*
 *.duckdb
 *.pbix
 
+demo_predictions.csv
+artifacts/model_quality/

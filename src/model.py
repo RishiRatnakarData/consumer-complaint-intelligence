@@ -39,8 +39,9 @@ def fit_relief_model(
         "state",
         "submitted_via",
     ]
-    binary_features = ["has_narrative"]
-    features = categorical_features + binary_features
+    # The narrative field can be absent from newer CFPB extracts. Select
+    # features using only training-period values, never test outcomes.
+    candidate_binary_features = ["has_narrative"]
     target = "has_relief"
 
     model_df = df.dropna(
@@ -87,26 +88,27 @@ def fit_relief_model(
                 "rows": len(model_df),
             }
         else:
+            binary_features = [
+                field for field in candidate_binary_features
+                if train[field].nunique(dropna=False) > 1
+            ]
+            features = categorical_features + binary_features
+            excluded_features = sorted(set(candidate_binary_features) - set(binary_features))
+            feature_transformers = [
+                (
+                    "category",
+                    OneHotEncoder(handle_unknown="ignore", min_frequency=5),
+                    categorical_features,
+                )
+            ]
+            if binary_features:
+                feature_transformers.append(("binary", "passthrough", binary_features))
             pipeline = Pipeline(
                 [
                     (
                         "encode",
                         ColumnTransformer(
-                            [
-                                (
-                                    "category",
-                                    OneHotEncoder(
-                                        handle_unknown="ignore",
-                                        min_frequency=5,
-                                    ),
-                                    categorical_features,
-                                ),
-                                (
-                                    "binary",
-                                    "passthrough",
-                                    binary_features,
-                                ),
-                            ]
+                            feature_transformers
                         ),
                     ),
                     (
@@ -140,6 +142,18 @@ def fit_relief_model(
                 "status": "completed",
                 "target": target,
                 "features": features,
+                "excluded_features": excluded_features,
+                "narrative_feature_audit": {
+                    "train_positive_rows": int(train["has_narrative"].sum()),
+                    "sample_positive_rows": int(model_df["has_narrative"].sum()),
+                    "train_unique_values": int(train["has_narrative"].nunique()),
+                    "interpretation": (
+                        "Constant in training; excluded from modeling; "
+                        "absence of source text does not establish no narrative was submitted"
+                        if "has_narrative" in excluded_features
+                        else "Varies in training and was retained"
+                    ),
+                },
                 "train_rows": len(train),
                 "test_rows": len(test),
                 "overall_relief_rate": round(

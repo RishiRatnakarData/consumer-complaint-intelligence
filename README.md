@@ -2,138 +2,162 @@
 
 [![CI](https://github.com/RishiRatnakarData/consumer-complaint-intelligence/actions/workflows/ci.yml/badge.svg)](https://github.com/RishiRatnakarData/consumer-complaint-intelligence/actions/workflows/ci.yml)
 
-An end-to-end analytics system for CFPB consumer complaints. It combines API ingestion, validated analytical datasets, DuckDB and SQL models, a leakage-aware classifier, automated testing, and a three-page Power BI report.
+**Consumer-finance analytics with reproducible Python/SQL pipelines, DuckDB, tested statistical models, probability calibration, and Power BI.** This repository analyzes a 2025 CFPB complaint detail sample and documents a separate, previously generated population-level reporting layer.
 
-![Power BI Executive Overview](docs/images/dashboard_overview.png)
+![Executive overview dashboard](docs/images/dashboard_overview.png)
 
-## Business problem
+## At a glance — reproducible local results (October 22, 2026)
 
-Millions of complaint records are difficult to interpret in raw form. This project turns them into reproducible metrics that help analysts understand complaint volume, product issues, company response patterns, and cases that may require additional review.
+| Measure | Reported result | Scope |
+|---|---:|---|
+| Validated complaint detail records | **5,000** | Reused 2025 processed CFPB sample; selection was not reverified on this run |
+| Automated tests | **53 passed** | User's Windows environment, v0.4 |
+| Original classifier ROC-AUC | **0.7327** | Separate chronological 75/25 split, 1,250 test records |
+| Research classifier ROC-AUC | **0.7292** | Chronological train/validation/test, 1,222 test records |
+| Uncalibrated research Brier score | **0.2167** | Research test records, before calibration |
+| **Platt-calibrated research Brier score** | **0.1833** | Same research test records; calibrator trained on validation only |
+| Constant-probability Brier score | **0.2371** | Train-prevalence baseline on research test records |
 
-It answers four questions:
+The Brier score improved **15.4% relative to the uncalibrated research model** in this held-out sample. This is **not** a claim of improved ranking, business impact, or superiority over the original 75/25 model, which uses different training windows. [Full findings and limitations](docs/CFPB_RESEARCH_FINDINGS_v0.5.md).
 
-- How did complaint volume change during 2025?
-- Which products and issues dominated the detail sample?
-- How did sampled response outcomes vary among companies?
-- Can intake-time information help identify complaints likely to receive relief?
+## Business question and analytical approach
 
-## Key results
+Can intake-time complaint attributes provide a useful estimate of whether a complaint will receive a response category containing **monetary or non-monetary relief**, and how stable are those probability estimates on later records?
 
-- The CFPB recorded **5,442,964 complaints in 2025**.
-- Monthly volume rose from **335,236 in February** to **519,786 in October**, a **55.1% increase**.
-- Credit reporting accounted for **4,379 of 5,000 sampled complaints (87.6%)**.
-- "Incorrect information on your report" represented **58.2%** of sampled credit-reporting complaints.
-- The sampled relief rate was **40.6%**, and **99.6%** of sampled complaints received a timely response.
-- All **5 data-quality checks** passed.
+1. Collect and validate CFPB complaint-level details; handle API pagination and duplicates.
+2. Normalize records, enforce data-quality checks, and persist Parquet plus DuckDB/SQL analytical models.
+3. Train a leakage-conscious logistic regression using intake-related categorical fields.
+4. Evaluate on later records; calibrate probabilities using a separate validation window; report reliability, discrimination, thresholds, and subgroup limitations.
+5. Communicate analytics through a three-page Power BI report and versioned evidence.
 
-Company-level relief rates in the sample varied substantially: TransUnion **63.3%**, Equifax **63.2%**, and Experian **0.7%**. These values are descriptive and are not company-quality rankings because they are not normalized for market share, customer exposure, or product mix.
+![Uncalibrated model reliability](docs/evidence/2026-10-22/test_reliability.png)
+
+[Calibrated reliability chart](docs/evidence/2026-10-22/calibrated_test_reliability.png) · [Research findings](docs/CFPB_RESEARCH_FINDINGS_v0.5.md) · [Model card](docs/CFPB_MODEL_CARD_v0.5.md) · [Case study](docs/CFPB_CASE_STUDY_v0.5.md)
+
+## Critical distinction: population totals versus modeling sample
+
+Earlier dashboard documentation reported **5,442,964 complaints in a 2025 population-level monthly aggregate analysis**. That aggregate was produced separately from the complaint-detail sample and **was not refreshed or independently revalidated in the October 22, 2026 run**: the optional trends endpoint did not provide usable data. The latest summary explicitly records `official_counts_status: skipped` and `official_period_complaints: null`. Do not present the archived aggregate as an updated population count or as the model's training size. Existing dashboard screenshots illustrate the earlier reporting layer and are not proof of current live aggregates.
+
+The present evaluation uses **only 5,000 processed complaint records**. The systematic weekly-stratified sample is not a random probability sample; sample and company proportions should not be generalized to all complainants.
+
+## Machine-learning results
+
+### A. Original model: chronological 75/25 holdout
+
+| Metric | Value |
+|---|---:|
+| Train / test | 3,750 / 1,250 |
+| ROC-AUC | 0.7327 |
+| Average precision | 0.4807 |
+| Accuracy | 0.6760 |
+| Balanced accuracy | 0.7350 |
+| Precision / recall | 0.5138 / 0.9202 |
+| F1 | 0.6594 |
+| Confusion matrix (TN / FP / FN / TP) | 453 / 371 / 34 / 392 |
+
+### B. Additional research experiment: three disjoint chronological windows
+
+| Split | Count | Received dates |
+|---|---:|---|
+| Train | 3,026 | 2025-01-07 to 2025-08-12 |
+| Validation | 752 | 2025-08-19 to 2025-10-07 |
+| Test | 1,222 | 2025-10-14 to 2025-12-31 |
+
+| Metric | Uncalibrated | Platt-calibrated |
+|---|---:|---:|
+| ROC-AUC | 0.7292 | 0.7292 |
+| Average precision | 0.4759 | 0.4759 |
+| Brier score (lower better) | 0.2167 | **0.1833** |
+| Log loss (lower better) | 0.6053 | **0.5186** |
+| Ten-bin expected calibration error (lower better) | 0.1484 | **0.0823** |
+
+**Threshold caveat:** raw-model threshold `0.65`, selected using validation to target at least 80% recall, achieved **81.7% test recall** with **55.2%** of the test set flagged. The calibrated model at threshold `0.50` achieved **31.9% test recall**, flagging **24.8%**. These are *different operating points*, not a fair like-for-like comparison of triage performance. The probability-calibration improvement does not justify automated complaint decisions.
+
+## Feature availability and quality controls
+
+The fitted model uses **company, product, sub-product, issue, state, and submission channel**. `has_narrative` was excluded because it is constant (`0`) in all 5,000 processed records. Missing publicly released narrative text **does not establish** that no consumers submitted narratives. Feature inclusion is decided from the training period only.
+
+The latest run passed five processed-data quality checks and 53 automated tests. The sample was reused locally and the monthly-aggregates download was skipped, both recorded explicitly. The tests and workflow do not establish production SLAs, deployment readiness, real-time data freshness, or causal validity.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-    A[CFPB API] --> B[Python ingestion]
-    B --> C[Validation and transformation]
-    C --> D[Parquet and DuckDB]
-    D --> E[SQL analytics]
-    C --> F[Relief classifier]
-    E --> G[Power BI]
-    F --> G
+    A[CFPB complaint API] --> B[Python ingestion and validation]
+    B --> C[Processed Parquet / DuckDB]
+    C --> D[SQL analytics]
+    C --> E[Original 75/25 classifier]
+    C --> F[Research train/validation/test model]
+    F --> G[Validation-only Platt calibration]
+    F --> H[Model-quality reports]
+    G --> H
+    D --> I[Power BI dashboard]
+    E --> I
 ```
 
-The pipeline keeps full-population monthly totals separate from a 5,000-record weekly-stratified detail sample. This prevents sample counts from being presented as population totals. See [architecture and design decisions](docs/architecture.md).
+[Architecture notes](docs/architecture.md) · [Power BI documentation](docs/power_bi.md)
 
-## Technical implementation
-
-- **Ingestion:** cursor-based CFPB API pagination with retries, date filters, progress reporting, and duplicate-page protection.
-- **Transformation:** schema normalization, type conversion, duplicate removal, feature engineering, and five data-quality checks.
-- **Storage and SQL:** typed Parquet outputs, a local DuckDB database, and SQL views for KPIs, company comparisons, and issue rankings.
-- **Sampling:** weekly time windows distribute the detail sample across the full year.
-- **Machine learning:** logistic regression uses only intake-time fields and a chronological 75/25 train-test split.
-- **Automation:** GitHub Actions runs Ruff, pytest, and the offline sample pipeline on every push and pull request.
-
-## Machine-learning evaluation
-
-The classifier estimates whether a complaint will receive monetary or non-monetary relief. Outcome fields, company response, and timely-response status are excluded from predictors to prevent leakage.
-
-| Metric | Result |
-|---|---:|
-| Training rows | 3,750 |
-| Test rows | 1,250 |
-| Baseline accuracy | 65.92% |
-| Accuracy | 67.68% |
-| Balanced accuracy | 73.61% |
-| ROC-AUC | 73.30% |
-| Average precision | 48.19% |
-| Precision | 51.44% |
-| Recall | 92.25% |
-| F1 score | 66.05% |
-
-The model emphasizes recall and identifies most sampled relief cases, but it also produces false positives. It is an analytical prioritization model, not an automated decision system or causal model.
-
-## Power BI report
-
-| Page | Purpose |
-|---|---|
-| [Executive Overview](docs/images/dashboard_overview.png) | Full-population monthly volume and sampled response outcomes |
-| [Company Benchmark](docs/images/company_benchmark.png) | Descriptive company-level complaint, relief, and narrative comparisons |
-| [Product & Issue Detail](docs/images/product_issue_detail.png) | Interactive product filtering and ranked issue analysis |
-
-The semantic model and measures are documented in [docs/power_bi.md](docs/power_bi.md).
-
-## Run locally
+## Reproduce locally (Windows PowerShell)
 
 ```powershell
 py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
+python -m pip install -r requirements-quality.txt
 python -m pytest -q
-python -m ruff check .
+python -m ruff check src tests
+```
+
+**Offline demonstration only:**
+
+```powershell
 python -m src.pipeline --sample
 ```
 
-Run the 2025 live-data build:
+**If you already have the 2025 real processed detail dataset:**
 
 ```powershell
-python -m src.pipeline --limit 5000 --start-date 2025-01-01 --end-date 2025-12-31
+python -m src.pipeline --reuse-processed --skip-official-counts --start-date 2025-01-01 --end-date 2025-12-31
+python -m scripts.evaluate_real_cfpb --data data/processed/complaints.parquet --out artifacts/model_quality_real --data-kind cfpb_sample
 ```
 
-Generated analytical files are written to `artifacts/`; processed Parquet data and the DuckDB database are written to `data/processed/`. Generated outputs are ignored by Git and can be reproduced from these commands.
+`--sample` overwrites the processed Parquet with a 12-row fixture; do **not** run it immediately before real-data evaluation. Rebuilding live details from the CFPB API may yield changed results or an error because the source data and endpoints can change. The generated data and complaint-level predictions are intentionally ignored by Git.
 
-## Testing and CI
+## Power BI pages
 
-- **9 automated tests** cover transformation, duplicate handling, cursor pagination, weekly sampling, monthly trends, and model behavior.
-- Ruff enforces Python code quality.
-- CI uses the committed sample fixture and does not depend on live CFPB availability.
-- Secrets, generated data, local databases, virtual environments, and Power BI files are excluded from Git.
+| Page | Focus |
+|---|---|
+| [Executive Overview](docs/images/dashboard_overview.png) | Archived population-level monthly trends alongside sampled outcomes; historical snapshot |
+| [Company Benchmark](docs/images/company_benchmark.png) | Descriptive response comparisons; **not** company rankings |
+| [Product and Issue Detail](docs/images/product_issue_detail.png) | Sample issues and product breakdowns |
 
 ## Repository structure
 
 ```text
-src/                 ingestion, transformation, analytics, and modeling
-sql/                 DuckDB analytical views
-tests/               automated unit and behavior tests
-docs/                architecture and Power BI documentation
-data/sample/         deterministic offline fixture for CI
-.github/workflows/   continuous-integration workflow
+src/                      data ingestion, transformations, original/research modeling
+cfpb_quality/             reusable probability, calibration, and reporting utilities
+scripts/                  data-evaluation CLIs and offline demonstration
+sql/                      analytics views
+artifacts/                generated data and results (ignored by Git)
+docs/                     methodology, limitations, dashboard notes, aggregate evidence
+docs/evidence/2026-10-22/ versioned non-row-level research evidence
+tests/ and tests_quality/ offline validation and regression tests
+.github/workflows/        continuous-integration checks
 ```
 
-## Limitations
+## Limitations and appropriate use
 
-- The 5,000 detail records are a systematic weekly-stratified sample, not a random probability sample.
-- Raw company counts do not account for company size, market share, customer exposure, or product mix.
-- Complaints reflect consumer submissions and are not independently verified findings of wrongdoing.
-- Predictive associations do not establish causality, and model calibration may drift over time.
+- The target is the **recorded company-response relief category**, not independently verified compensation or consumer benefit.
+- Company, product and time distributions may shift; train prevalence was **45.1%** versus test prevalence **34.4%**.
+- Company-specific results vary greatly and some groups have only one recorded target class. No ranking or fairness conclusion is warranted without further study.
+- Response labels can be delayed or revised; chronological splitting of the *received date* does not guarantee truly point-in-time labels.
+- The project is research and analytical decision support, **not** a deployed, automated complaint-disposition tool.
+- Historical aggregate claims and dashboard screenshots predate the latest evaluation run.
 
-## Technology
+[Source evidence and exact methodological caveats](docs/CFPB_RESEARCH_FINDINGS_v0.5.md)
 
-Python, pandas, Requests, DuckDB, SQL, scikit-learn, Parquet, Power BI, pytest, Ruff, GitHub Actions
+## Data source and author
 
-## Data source
+[Consumer Financial Protection Bureau Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/)
 
-[CFPB Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/)
-
-## Author
-
-Rishi Ratnakar | [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) | [GitHub](https://github.com/RishiRatnakarData)
+Rishi Ratnakar · [LinkedIn](https://www.linkedin.com/in/rishi-ratnakar) · [GitHub](https://github.com/RishiRatnakarData)
