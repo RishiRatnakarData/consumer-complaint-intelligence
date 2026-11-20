@@ -57,6 +57,14 @@ The analysis also includes threshold comparisons, subgroup diagnostics, and feat
 
 [**Detailed research findings**](docs/CFPB_RESEARCH_FINDINGS_v0.5.md) · [**Model card**](docs/CFPB_MODEL_CARD_v0.5.md) · [**Research evidence**](docs/evidence/2026-10-22/) · [**Case study**](docs/CFPB_CASE_STUDY_v0.5.md)
 
+## Historical narrative NLP (optional research add-on)
+
+The historical text-research module is separate from the 2025 structured complaint sample and the relief-outcome model. It adds **sentence-embedding semantic retrieval** and a **chronological product-classification benchmark** comparing a majority-class baseline, TF-IDF with logistic regression, and sentence embeddings with logistic regression.
+
+**Source distinction:** the October 2026 audit found no exposed narratives in the project's 5,000-record structured sample. The CFPB stopped live narrative publication in August 2026, but historical records are available in its [official narrative archive](https://www.consumerfinance.gov/foia-requests/foia-electronic-reading-room/cfpb-consumer-complaint-database-narratives-archive/). The NLP add-on reads locally downloaded historical archives; it does not claim live feed access. Included fictional data supports an offline smoke test only, **not** real CFPB performance claims.
+
+[**NLP methods, reproducibility, and limitations**](docs/CFPB_NLP.md)
+
 ## Solution architecture
 
 ```mermaid

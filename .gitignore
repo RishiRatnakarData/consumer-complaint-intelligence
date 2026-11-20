@@ -14,3 +14,4 @@ artifacts/*
 
 demo_predictions.csv
 artifacts/model_quality/
+data/sample/nlp_synthetic.csv
