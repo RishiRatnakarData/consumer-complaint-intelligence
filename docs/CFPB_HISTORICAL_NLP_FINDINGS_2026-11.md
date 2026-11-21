@@ -1,4 +1,4 @@
-# Historical CFPB narrative NLP ? research findings
+# Historical CFPB narrative NLP - research findings
 
 ## Research scope
 
