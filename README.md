@@ -65,6 +65,8 @@ The historical text-research module is separate from the 2025 structured complai
 
 [**NLP methods, reproducibility, and limitations**](docs/CFPB_NLP.md)
 
+[**Historical CFPB NLP benchmark ? official archive results**](docs/CFPB_HISTORICAL_NLP_FINDINGS_2026-11.md)
+
 ## Solution architecture
 
 ```mermaid
