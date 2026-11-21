@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import date, timedelta
 from pathlib import Path
 
 import pandas as pd
@@ -33,12 +34,12 @@ def create_fixture(path: Path, rows_per_class: int = 24) -> pd.DataFrame:
     if rows_per_class < 8:
         raise ValueError("Need at least eight rows per class")
     rows = []
-    date = pd.Timestamp("2024-01-01")
+    start_date = date(2024, 1, 1)
     for index in range(rows_per_class):
         for offset, (product, templates) in enumerate(TEMPLATES.items()):
             rows.append({
                 "complaint_id": f"SYN-{index:03d}-{offset}",
-                "date_received": (date + pd.Timedelta(days=index)).date().isoformat(),
+                "date_received": (start_date + timedelta(days=index)).isoformat(),
                 "product": product,
                 "complaint_what_happened": (
                     f"{templates[index % len(templates)]}. "

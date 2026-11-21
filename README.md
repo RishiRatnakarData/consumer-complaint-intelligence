@@ -6,7 +6,7 @@
 
 ![Consumer Finance Complaint Intelligence — executive dashboard](docs/images/dashboard_overview.png)
 
-[**Dashboard gallery**](#dashboard-gallery) · [**Results**](#selected-results) · [**Architecture**](#solution-architecture) · [**Research findings**](docs/CFPB_RESEARCH_FINDINGS_v0.5.md) · [**Model card**](docs/CFPB_MODEL_CARD_v0.5.md)
+[**Dashboard gallery**](#dashboard-gallery) · [**Results**](#selected-results) · [**Historical NLP**](#historical-narrative-nlp-optional-research-add-on) · [**Architecture**](#solution-architecture) · [**Research findings**](docs/CFPB_RESEARCH_FINDINGS_v0.5.md) · [**Model card**](docs/CFPB_MODEL_CARD_v0.5.md)
 
 ## Project overview
 
@@ -22,7 +22,7 @@ The analysis covers a **5,000-record CFPB complaint detail sample from 2025**. A
 | Complaint composition | **87.6%** of the detail sample was credit-reporting complaints | [Dashboard gallery](#dashboard-gallery) |
 | Original classifier | **0.7327 ROC-AUC** on a 1,250-record chronological holdout | [Model card](docs/CFPB_MODEL_CARD_v0.5.md) |
 | Probability calibration | **0.1833 Brier score**, versus **0.2167** uncalibrated, on a separate 1,222-record research holdout | [Research findings](docs/CFPB_RESEARCH_FINDINGS_v0.5.md) |
-| Engineering quality | **57 automated tests passed locally**; Ruff checks passed (October 22, 2026) | [Automated workflows](.github/workflows/) |
+| Engineering quality | **68 automated tests passed locally**; Ruff checks passed (November 20, 2026) | [Automated workflows](.github/workflows/) |
 
 The two classifier results come from **different evaluation designs**. The calibration experiment improved probability quality on its research holdout; it did not demonstrate a corresponding improvement in ranking accuracy or operational outcomes.
 
